@@ -6,7 +6,7 @@ from routers import api
 
 app = FastAPI(
     title="ML-Project",
-    description="Magankov ML-Project - IVT-301",
+    description="Magankov KS (IVT-301). ML-Project. 2024",
     version="1.0"
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -16,7 +16,7 @@ app.include_router(api.router, prefix="/api/v1")
 
 
 @app.get("/", include_in_schema=False)
-async def read_item(request: Request):
+async def index(request: Request):
     return templates.TemplateResponse(
         request=request, name="index.html"
     )

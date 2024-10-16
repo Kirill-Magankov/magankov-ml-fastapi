@@ -47,14 +47,14 @@ starlette==0.40.0
 tensorboard==2.17.1
 tensorboard-data-server==0.7.2
 tensorflow==2.17.0
-tensorflow-io-gcs-filesystem==0.37.1
+#tensorflow-io-gcs-filesystem==0.37.1 # macOS
 termcolor==2.5.0
 threadpoolctl==3.5.0
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
 uvicorn==0.32.0
-uvloop==0.21.0
+# uvloop==0.21.0 # macOS
 watchfiles==0.24.0
 websockets==13.1
 Werkzeug==3.0.4

@@ -5,8 +5,12 @@ from starlette.templating import Jinja2Templates
 from routers import api
 
 app = FastAPI(
-    title="ML-Project",
-    description="Magankov KS (IVT-301). ML-Project. 2024",
+    title="Machine Learning Api",
+    description="Magankov K.S (IVT-301) © 2024",
+    contact={
+        "name": "Kirill Magankov",
+        "url": "https://t.me/zntnaxbi_mk",
+    },
     version="1.0"
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")

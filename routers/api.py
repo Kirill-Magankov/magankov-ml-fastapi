@@ -26,13 +26,11 @@ class TFClassification(BaseModel):
 
 @router.post("/tensorflow-regression")
 async def tensorflow_regression(data: TFRegression):
-    input_data = np.array([[
+    pred = model_reg.predict(np.array([[
         data.temperature,
         data.temperature,
         data.wind_speed,
-    ]])
-
-    pred = model_reg.predict(input_data)[0][0]
+    ]]), verbose=False)[0][0]
     return {
         "msg": f"Потребление энергии: {round(float(pred), 2)} (киловатт-часы)",
         "inputs": data,
@@ -41,17 +39,15 @@ async def tensorflow_regression(data: TFRegression):
 
 @router.post("/tensorflow-classification")
 async def tensorflow_classification(data: TFClassification):
-    input_data = np.array([[
+    pred = model_class.predict(np.array([[
         data.age - 35,
         data.income - 65_000,
         data.experience,
-    ]])
-
-    pred = model_class.predict(input_data)
+    ]]), verbose=False)
     result = np.where(pred > 0.5, "Высокий", "Низкий")[0][0]
     return {
         "msg": f"Уровень дохода: {result}",
-        "accuracy": str(round(pred[0][0], 6))
+        "accuracy": str(round(pred[0][0], 8))
     }
 
 
@@ -84,31 +80,27 @@ class DiabetesModel(BaseModel):
 
 @router.post('/knn')
 def knn_model_prediction(data: KNNModel):
-    X_new = np.array([[
+    pred = gender_shoe_model.predict(np.array([[
         data.height,
         data.weight,
         data.shoe_size
-    ]])
-
-    pred = gender_shoe_model.predict(X_new)
+    ]]))
     return {"msg": f"Gender: {GENDER_LIST[pred[0]]}"}
 
 
 @router.post('/shoe-size')
 def shoe_size_prediction(data: ShoeSizeModel):
-    X_new = np.array([[
+    pred = shoe_model.predict(np.array([[
         data.height,
         data.weight,
         data.gender,
-    ]])
-
-    pred = shoe_model.predict(X_new)
+    ]]))
     return {"msg": f"Shoe size: {math.ceil(pred[0])}"}
 
 
 @router.post('/diabetes')
 def diabetes_predication(data: DiabetesModel):
-    X_new = np.array([[
+    pred = diabetes_model.predict(np.array([[
         data.pregnancies,
         data.glucose,
         data.blood_pressures,
@@ -116,15 +108,13 @@ def diabetes_predication(data: DiabetesModel):
         data.insulin,
         data.bmi,
         data.age
-    ]])
-
-    pred = diabetes_model.predict(X_new)
+    ]]))
     return {"msg": f"Diabetes: {DIABETES_STATUS[pred[0]]}"}
 
 
 @router.post('/diabetes-tree')
-def api_diabetes_tree_get(data: DiabetesModel):
-    X_new = np.array([[
+def diabetes_tree_prediction(data: DiabetesModel):
+    pred = diabetes_tree_model.predict(np.array([[
         data.pregnancies,
         data.glucose,
         data.blood_pressures,
@@ -132,14 +122,12 @@ def api_diabetes_tree_get(data: DiabetesModel):
         data.insulin,
         data.bmi,
         data.age
-    ]])
-
-    pred = diabetes_tree_model.predict(X_new)
+    ]]))
     return {"msg": f"Diabetes: {DIABETES_STATUS[pred[0]]}"}
 
 
 @router.get('/metrics')
-def api_metrics_get():
+def model_metrics():
     metrics = {
         "diabetes_decision_tree": get_classification_metrics(ModelTypes.DIABETES_TREE, True),
         "diabetes_model": get_classification_metrics(ModelTypes.DIABETES, True),

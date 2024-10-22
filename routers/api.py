@@ -1,11 +1,13 @@
 import math
+from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, File
 from pydantic import BaseModel
 
-from helpers import model_reg, model_class, gender_shoe_model, GENDER_LIST, shoe_model, diabetes_model, DIABETES_STATUS, \
-    diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics
+from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST
+from helpers import model_reg, model_class, gender_shoe_model, shoe_model, diabetes_model, \
+    diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image
 
 router = APIRouter()
 
@@ -24,7 +26,7 @@ class TFClassification(BaseModel):
     experience: int
 
 
-@router.post("/tensorflow-regression")
+@router.post("/tensorflow-regression", tags=["tensorflow"])
 async def tensorflow_regression(data: TFRegression):
     pred = model_reg.predict(np.array([[
         data.temperature,
@@ -37,7 +39,7 @@ async def tensorflow_regression(data: TFRegression):
     }
 
 
-@router.post("/tensorflow-classification")
+@router.post("/tensorflow-classification", tags=["tensorflow"])
 async def tensorflow_classification(data: TFClassification):
     pred = model_class.predict(np.array([[
         data.age - 35,
@@ -47,7 +49,19 @@ async def tensorflow_classification(data: TFClassification):
     result = np.where(pred > 0.5, "Высокий", "Низкий")[0][0]
     return {
         "msg": f"Уровень дохода: {result}",
-        "accuracy": str(round(pred[0][0], 8))
+        "probability": str(round(pred[0][0], 8))
+    }
+
+
+@router.post("/tensorflow-fashion", tags=["tensorflow"])
+async def tensorflow_fashion(image: Annotated[bytes, File()]):
+    x = normalize_image(image)
+    prediction = fashion_mnist.predict(x, verbose=False)
+    class_index = np.argmax(fashion_mnist.predict(x, verbose=False))
+
+    return {
+        "msg": FASHION_MNIST[class_index],
+        "probability": str(round(prediction[0][class_index], 3)),
     }
 
 

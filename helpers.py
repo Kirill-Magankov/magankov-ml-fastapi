@@ -1,11 +1,16 @@
 import pickle
-from enum import Enum, auto
+from io import BytesIO
+
+import keras
 import tensorflow as tf
 
 import math
 import numpy as np
 import pandas as pd
+from PIL import Image
+from keras.src.utils import img_to_array
 
+from constants import BASE_DIR, ModelTypes
 from models.neuron.neuron import SingleNeuron
 from models.test_split import get_shoe_size_test_set, get_shoe_size_gender_test_set, get_diabetes_test_set
 
@@ -13,25 +18,16 @@ from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error, 
     accuracy_score, precision_score, recall_score, f1_score
 
 new_neuron = SingleNeuron(input_size=3)
-new_neuron.load_weights('models/neuron/neuron_weights.txt')
+new_neuron.load_weights(BASE_DIR / 'models/neuron/neuron_weights.txt')
 
-diabetes_model = pickle.load(open('models/diabetes.pickle', 'rb'))
-diabetes_tree_model = pickle.load(open('models/diabetes_decision_tree.pickle', 'rb'))
-gender_shoe_model = pickle.load(open('models/shoe-size-gender.pickle', 'rb'))
-shoe_model = pickle.load(open('models/shoe-size_predict.pickle', 'rb'))
+diabetes_model = pickle.load(open(BASE_DIR / 'models/diabetes.pickle', 'rb'))
+diabetes_tree_model = pickle.load(open(BASE_DIR / 'models/diabetes_decision_tree.pickle', 'rb'))
+gender_shoe_model = pickle.load(open(BASE_DIR / 'models/shoe-size-gender.pickle', 'rb'))
+shoe_model = pickle.load(open(BASE_DIR / 'models/shoe-size_predict.pickle', 'rb'))
 
-model_class = tf.keras.models.load_model('models/tensorflow/classification_model.h5')  # noqa
-model_reg = tf.keras.models.load_model('models/tensorflow/regression_model.h5')  # noqa
-
-DIABETES_STATUS = ["нет", "есть"]
-GENDER_LIST = ["женский", "мужской"]
-
-
-class ModelTypes(Enum):
-    DIABETES = auto()
-    DIABETES_TREE = auto()
-    GENDER_SHOE = auto()
-    SHOE_MODEL = auto()
+model_class = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/classification_model.h5')  # noqa
+model_reg = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/regression_model.h5')  # noqa
+fashion_mnist = keras.saving.load_model(BASE_DIR / 'models/tensorflow/fashion_mnist.keras')
 
 
 def get_regression_metrics(model_type: ModelTypes):
@@ -77,3 +73,16 @@ def get_classification_metrics(model_type: ModelTypes, to_json=False):
             {"title": "Recall", "value": round(recall_score(y_test, y_pred), 4)},
             {"title": "F1-мера", "value": round(f1_score(y_test, y_pred), 4)},
             ]
+
+
+def normalize_image(file):
+    img = (Image.open(BytesIO(file))
+           .resize((28, 28))
+           .convert('L'))
+
+    x = img_to_array(img)
+    x = x.reshape(1, 784)
+    x = 255 - x
+    x /= 255
+
+    return x

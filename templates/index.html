@@ -1,34 +1,50 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="w-full max-w-7xl mx-auto my-4">
+<div class="w-full max-w-7xl mx-auto my-4">
 
-        <h1 class="text-3xl font-bold mb-8">Please select an image to processing</h1>
-        <form class="space-y-2" method="POST" enctype="multipart/form-data">
+    <h1 class="text-3xl font-bold mb-8">Please select an image to processing</h1>
+    <form class="space-y-2 max-w-sm" method="POST" enctype="multipart/form-data">
 
-            <input type="file" name="image" accept="image/*" required class="block border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none
+        <input type="file" name="image" accept="image/*" required class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none
                 file:bg-gray-50 file:border-0 file:me-4 file:py-3 file:px-4">
 
-            <button type="submit"
-                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
-                Submit
-            </button>
-        </form>
+        <!-- Floating Select -->
+        <div class="relative">
+            <select class="peer p-4 pe-9 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none
+  focus:pt-6 focus:pb-2 [&:not(:placeholder-shown)]:pt-6 [&:not(:placeholder-shown)]:pb-2 autofill:pt-6 autofill:pb-2"
+                    name="neural_network" required>
 
-        <div class="mt-8 space-y-4">
-            {% if prediction %}
-                <div class="space-y-2">
-                    <p class="text-gray-500">Server response:</p>
-                    <pre class="text-wrap w-full bg-gray-100 rounded-lg px-4 py-2">{{ prediction }}</pre>
-                </div>
-            {% endif %}
+                <option value="mlp" selected>Multilayer Perceptron (MLP)</option>
+                <option value="cnn">Convolutional Neural Network (CNN)</option>
+            </select>
 
-            {% if image %}
-                <div class="space-y-2">
-                    <p class="text-gray-500">Uploaded image:</p>
-                    <img class="border rounded-lg w-[24rem]" src="data:image/png;base64,{{ image }}" alt="Uploaded Image"/>
-                </div>
-            {% endif %}
+            <label class="absolute top-0 start-0 p-4 h-full truncate pointer-events-none transition ease-in-out duration-100 border border-transparent peer-disabled:opacity-50 peer-disabled:pointer-events-none
+    peer-focus:text-xs peer-focus:-translate-y-1.5 peer-focus:text-gray-500 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:-translate-y-1.5 peer-[:not(:placeholder-shown)]:text-gray-500">Neural
+                Network</label>
         </div>
+        <!-- End Floating Select -->
+
+        <button type="submit"
+                class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
+            Submit
+        </button>
+    </form>
+
+    <div class="mt-8 space-y-4">
+        {% if prediction %}
+        <div class="space-y-2">
+            <p class="text-gray-500">Server response:</p>
+            <pre class="text-wrap w-full bg-gray-100 rounded-lg px-4 py-2">{{ prediction }}</pre>
+        </div>
+        {% endif %}
+
+        {% if image %}
+        <div class="space-y-2">
+            <p class="text-gray-500">Uploaded image:</p>
+            <img class="border rounded-lg w-[24rem]" src="data:image/png;base64,{{ image }}" alt="Uploaded Image"/>
+        </div>
+        {% endif %}
     </div>
+</div>
 {% endblock %}

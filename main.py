@@ -1,16 +1,12 @@
 import base64
-from io import BytesIO
-from typing import Annotated
+from typing import Annotated, Literal
 
-import requests
-from PIL import Image
 from fastapi import FastAPI, Request, File
+from fastapi.params import Body
 from starlette.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-from werkzeug.utils import redirect
 
-from constants import HOST, API_URL
 from routers import api
 from routers.api import tensorflow_fashion
 
@@ -49,12 +45,16 @@ async def index(request: Request):
 
 
 @app.post('/', include_in_schema=False)
-async def index_image_upload(request: Request, image: Annotated[bytes, File()]):
-    if not image: return RedirectResponse(url='/', status_code=301)
+async def index_image_upload(request: Request,
+                             image: Annotated[bytes, File()],
+                             neural_network: Annotated[Literal['mlp', 'cnn'], Body()], ):
+
+    if not image or not neural_network: return RedirectResponse(url='/', status_code=301)
+
     context = {
         'title': 'Home',
         'image': base64.b64encode(image).decode(),
-        'prediction': await tensorflow_fashion(image),
+        'prediction': await tensorflow_fashion(image, neural_network),
         **common_context(),
     }
 

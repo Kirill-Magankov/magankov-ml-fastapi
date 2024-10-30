@@ -1,13 +1,14 @@
 import math
-from typing import Annotated
+from typing import Annotated, Literal
 
 import numpy as np
-from fastapi import APIRouter, File
+from fastapi import APIRouter, File, Body
 from pydantic import BaseModel
 
 from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST
 from helpers import model_reg, model_class, gender_shoe_model, shoe_model, diabetes_model, \
-    diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image
+    diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image, \
+    fashion_cnn
 
 router = APIRouter()
 
@@ -54,13 +55,18 @@ async def tensorflow_classification(data: TFClassification):
 
 
 @router.post("/tensorflow-fashion", tags=["tensorflow"])
-async def tensorflow_fashion(image: Annotated[bytes, File()]):
-    x = normalize_image(image)
-    prediction = fashion_mnist.predict(x, verbose=False)
-    class_index = np.argmax(fashion_mnist.predict(x, verbose=False))
+async def tensorflow_fashion(image: Annotated[bytes, File()],
+                             neural_network: Annotated[Literal['mlp', 'cnn'], Body()]):
+
+    _model = fashion_cnn if neural_network == 'cnn' else fashion_mnist
+
+    x = normalize_image(image, neural_network)
+    prediction = _model.predict(x, verbose=False)
+    class_index = np.argmax(prediction)
 
     return {
         "msg": FASHION_MNIST[class_index],
+        "network": neural_network,
         "probability": str(round(prediction[0][class_index], 3)),
     }
 

@@ -28,6 +28,7 @@ shoe_model = pickle.load(open(BASE_DIR / 'models/shoe-size_predict.pickle', 'rb'
 model_class = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/classification_model.h5')  # noqa
 model_reg = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/regression_model.h5')  # noqa
 fashion_mnist = keras.saving.load_model(BASE_DIR / 'models/tensorflow/fashion_mnist.keras')
+fashion_cnn = keras.saving.load_model(BASE_DIR / 'models/tensorflow/fashion_cnn.keras')
 
 
 def get_regression_metrics(model_type: ModelTypes):
@@ -75,14 +76,14 @@ def get_classification_metrics(model_type: ModelTypes, to_json=False):
             ]
 
 
-def normalize_image(file):
-    img = (Image.open(BytesIO(file))
-           .resize((28, 28))
-           .convert('L'))
+def normalize_image(file, neural_network='mlp'):
+    img = Image.open(BytesIO(file)).resize((28, 28)).convert('L')
 
-    x = img_to_array(img)
-    x = x.reshape(1, 784)
-    x = 255 - x
-    x /= 255
+    x = 255 - img_to_array(img)
+
+    if neural_network == 'mlp':
+        x = x.reshape(1, 784) / 255
+    else:
+        x = np.expand_dims(x, axis=0)
 
     return x

@@ -1,14 +1,18 @@
 import math
+from io import BytesIO
 from typing import Annotated, Literal
 
 import numpy as np
+from PIL import Image
 from fastapi import APIRouter, File, Body
+from keras.src.utils import img_to_array
+from keras.src.utils.module_utils import tensorflow
 from pydantic import BaseModel
 
-from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST
+from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST, CAR_BIKES
 from helpers import model_reg, model_class, gender_shoe_model, shoe_model, diabetes_model, \
     diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image, \
-    fashion_cnn
+    fashion_cnn, car_bikes
 
 router = APIRouter()
 
@@ -57,7 +61,6 @@ async def tensorflow_classification(data: TFClassification):
 @router.post("/tensorflow-fashion", tags=["tensorflow"])
 async def tensorflow_fashion(image: Annotated[bytes, File()],
                              neural_network: Annotated[Literal['mlp', 'cnn'], Body()]):
-
     _model = fashion_cnn if neural_network == 'cnn' else fashion_mnist
 
     x = normalize_image(image, neural_network)
@@ -67,6 +70,21 @@ async def tensorflow_fashion(image: Annotated[bytes, File()],
     return {
         "msg": FASHION_MNIST[class_index],
         "network": neural_network,
+        "probability": str(round(prediction[0][class_index], 3)),
+    }
+
+
+@router.post("/tensorflow-cars", tags=["tensorflow"])
+async def tensorflow_cars(image: Annotated[bytes, File()]):
+    img = Image.open(BytesIO(image)).resize((360, 360))
+
+    x = img_to_array(img)
+    x = tensorflow.expand_dims(x, 0)
+    prediction = car_bikes.predict(x, verbose=False)
+    class_index = np.argmax(prediction)
+
+    return {
+        "msg": CAR_BIKES[class_index],
         "probability": str(round(prediction[0][class_index], 3)),
     }
 

@@ -1,6 +1,10 @@
+import logging
+import os
 import pickle
 from io import BytesIO
 
+import dotenv
+import gdown
 import keras
 import tensorflow as tf
 
@@ -17,6 +21,8 @@ from models.test_split import get_shoe_size_test_set, get_shoe_size_gender_test_
 from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error, mean_absolute_error, r2_score, \
     accuracy_score, precision_score, recall_score, f1_score
 
+dotenv.load_dotenv()
+
 new_neuron = SingleNeuron(input_size=3)
 new_neuron.load_weights(BASE_DIR / 'models/neuron/neuron_weights.txt')
 
@@ -29,6 +35,25 @@ model_class = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/classific
 model_reg = tf.keras.models.load_model(BASE_DIR / 'models/tensorflow/regression_model.h5')  # noqa
 fashion_mnist = keras.saving.load_model(BASE_DIR / 'models/tensorflow/fashion_mnist.keras')
 fashion_cnn = keras.saving.load_model(BASE_DIR / 'models/tensorflow/fashion_cnn.keras')
+
+
+def get_car_bikes_model():
+    if hasattr(get_car_bikes_model, 'model'): return get_car_bikes_model.model
+
+    model_path = BASE_DIR / 'models/tensorflow/car_bikes.keras'
+
+    url = os.getenv('CAR_BIKES_KERAS_URL')
+    if not url: raise Exception("[CAR_BIKES_KERAS_URL] No model url provided")
+
+    if not model_path.exists():
+        gdown.download(url, model_path.__str__())
+
+    loaded_model = keras.saving.load_model(model_path)
+    get_car_bikes_model.model = loaded_model
+    return loaded_model
+
+
+car_bikes = get_car_bikes_model()
 
 
 def get_regression_metrics(model_type: ModelTypes):
@@ -81,9 +106,8 @@ def normalize_image(file, neural_network='mlp'):
 
     x = 255 - img_to_array(img)
 
-    if neural_network == 'mlp':
-        x = x.reshape(1, 784) / 255
-    else:
-        x = np.expand_dims(x, axis=0)
+    x = x.reshape(1, 784) / 255 \
+        if neural_network == 'mlp' \
+        else np.expand_dims(x, axis=0)
 
     return x

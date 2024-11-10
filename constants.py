@@ -12,6 +12,8 @@ GENDER_LIST = ["female", "male"]
 FASHION_MNIST = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
                  'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 
+CAR_BIKES = ["Bike", "Cars"]
+
 
 class ModelTypes(Enum):
     DIABETES = auto()

@@ -8,7 +8,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from routers import api
-from routers.api import tensorflow_fashion
+from routers.api import tensorflow_fashion, tensorflow_cars
 
 app = FastAPI(
     title="Machine Learning Api",
@@ -38,6 +38,7 @@ async def index(request: Request):
         'title': 'Home',
         **common_context(),
     }
+
     return templates.TemplateResponse(
         request=request, name="index.html",
         context=context
@@ -48,8 +49,8 @@ async def index(request: Request):
 async def index_image_upload(request: Request,
                              image: Annotated[bytes, File()],
                              neural_network: Annotated[Literal['mlp', 'cnn'], Body()], ):
-
-    if not image or not neural_network: return RedirectResponse(url='/', status_code=301)
+    if not image or not neural_network:
+        return RedirectResponse(url='/', status_code=301)
 
     context = {
         'title': 'Home',
@@ -60,5 +61,37 @@ async def index_image_upload(request: Request,
 
     return templates.TemplateResponse(
         request=request, name="index.html",
+        context=context
+    )
+
+
+@app.get("/custom", include_in_schema=False)
+async def custom_dataset(request: Request):
+    context = {
+        'title': 'Custom Dataset',
+        **common_context(),
+    }
+
+    return templates.TemplateResponse(
+        request=request, name="custom_dataset.html",
+        context=context
+    )
+
+
+@app.post('/custom', include_in_schema=False)
+async def custom_image_upload(request: Request,
+                              image: Annotated[bytes, File()], ):
+    if not image:
+        return RedirectResponse(url='/', status_code=301)
+
+    context = {
+        'title': 'Custom Dataset',
+        'image': base64.b64encode(image).decode(),
+        'prediction': await tensorflow_cars(image),
+        **common_context(),
+    }
+
+    return templates.TemplateResponse(
+        request=request, name="custom_dataset.html",
         context=context
     )

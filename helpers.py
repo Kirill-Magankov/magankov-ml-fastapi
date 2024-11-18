@@ -55,6 +55,9 @@ def get_car_bikes_model():
 
 car_bikes = get_car_bikes_model()
 
+# transfer-learning model (mobileNet)
+car_bikes_tl = keras.saving.load_model(BASE_DIR / 'models/tensorflow/car_bike_transfer.keras')
+
 
 def get_regression_metrics(model_type: ModelTypes):
     if model_type == ModelTypes.SHOE_MODEL:

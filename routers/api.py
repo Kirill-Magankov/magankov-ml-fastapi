@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST, CAR_BIKES
 from helpers import model_reg, model_class, gender_shoe_model, shoe_model, diabetes_model, \
     diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image, \
-    fashion_cnn, car_bikes
+    fashion_cnn, car_bikes, car_bikes_tl
 
 router = APIRouter()
 
@@ -75,16 +75,22 @@ async def tensorflow_fashion(image: Annotated[bytes, File()],
 
 
 @router.post("/tensorflow-cars", tags=["tensorflow"])
-async def tensorflow_cars(image: Annotated[bytes, File()]):
-    img = Image.open(BytesIO(image)).resize((360, 360))
+async def tensorflow_cars(image: Annotated[bytes, File()],
+                          category: Annotated[Literal['custom-dataset', 'transfer-learning'], Body()]):
+
+    rp = (360, 360) if category == 'custom-dataset' else (160, 160) # resize point
+    _model = car_bikes if category == 'custom-dataset' else car_bikes_tl
+
+    img = Image.open(BytesIO(image)).resize(rp)
 
     x = img_to_array(img)
     x = tensorflow.expand_dims(x, 0)
-    prediction = car_bikes.predict(x, verbose=False)
+    prediction = _model.predict(x, verbose=False)
     class_index = np.argmax(prediction)
 
     return {
         "msg": CAR_BIKES[class_index],
+        "category": category,
         "probability": str(round(prediction[0][class_index], 3)),
     }
 

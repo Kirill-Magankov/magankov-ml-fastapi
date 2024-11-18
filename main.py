@@ -49,8 +49,8 @@ async def index(request: Request):
 async def index_image_upload(request: Request,
                              image: Annotated[bytes, File()],
                              neural_network: Annotated[Literal['mlp', 'cnn'], Body()], ):
-    if not image or not neural_network:
-        return RedirectResponse(url='/', status_code=301)
+
+    if not image or not neural_network: return RedirectResponse(url='/', status_code=301)
 
     context = {
         'title': 'Home',
@@ -65,33 +65,34 @@ async def index_image_upload(request: Request,
     )
 
 
-@app.get("/custom", include_in_schema=False)
+@app.get("/car-bikes", include_in_schema=False)
 async def custom_dataset(request: Request):
     context = {
-        'title': 'Custom Dataset',
+        'title': 'Car/Bikes',
         **common_context(),
     }
 
     return templates.TemplateResponse(
-        request=request, name="custom_dataset.html",
+        request=request, name="car_bikes.html",
         context=context
     )
 
 
-@app.post('/custom', include_in_schema=False)
+@app.post('/car-bikes', include_in_schema=False)
 async def custom_image_upload(request: Request,
-                              image: Annotated[bytes, File()], ):
-    if not image:
-        return RedirectResponse(url='/', status_code=301)
+                              image: Annotated[bytes, File()],
+                              category: Annotated[Literal['custom-dataset', 'transfer-learning'], Body()]):
+
+    if not image or not category: return RedirectResponse(url='/', status_code=301)
 
     context = {
-        'title': 'Custom Dataset',
+        'title': 'Car/Bikes',
         'image': base64.b64encode(image).decode(),
-        'prediction': await tensorflow_cars(image),
+        'prediction': await tensorflow_cars(image, category),
         **common_context(),
     }
 
     return templates.TemplateResponse(
-        request=request, name="custom_dataset.html",
+        request=request, name="car_bikes.html",
         context=context
     )

@@ -1,10 +1,13 @@
+import base64
+import io
 import math
 from io import BytesIO
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional, List
 
+import cv2
 import numpy as np
 from PIL import Image
-from fastapi import APIRouter, File, Body
+from fastapi import APIRouter, File, Body, Form
 from keras.src.utils import img_to_array
 from keras.src.utils.module_utils import tensorflow
 from pydantic import BaseModel
@@ -12,7 +15,7 @@ from pydantic import BaseModel
 from constants import DIABETES_STATUS, GENDER_LIST, FASHION_MNIST, CAR_BIKES
 from helpers import model_reg, model_class, gender_shoe_model, shoe_model, diabetes_model, \
     diabetes_tree_model, get_classification_metrics, ModelTypes, get_regression_metrics, fashion_mnist, normalize_image, \
-    fashion_cnn, car_bikes, car_bikes_tl
+    fashion_cnn, car_bikes, car_bikes_tl, yolov5_model, image_from_array
 
 router = APIRouter()
 
@@ -77,8 +80,7 @@ async def tensorflow_fashion(image: Annotated[bytes, File()],
 @router.post("/tensorflow-cars", tags=["tensorflow"])
 async def tensorflow_cars(image: Annotated[bytes, File()],
                           category: Annotated[Literal['custom-dataset', 'transfer-learning'], Body()]):
-
-    rp = (360, 360) if category == 'custom-dataset' else (160, 160) # resize point
+    rp = (360, 360) if category == 'custom-dataset' else (160, 160)  # resize point
     _model = car_bikes if category == 'custom-dataset' else car_bikes_tl
 
     img = Image.open(BytesIO(image)).resize(rp)
@@ -96,6 +98,70 @@ async def tensorflow_cars(image: Annotated[bytes, File()],
 
 
 # endregion
+
+
+class YoloDetectingModel(BaseModel):
+    confidence_threshold: float
+    desired_classes: Optional[List[str]] = None
+
+
+@router.post("/yolo5-detecting", tags=["Yolo"])
+async def yolov5_detecting(image: Annotated[bytes, File()],
+                           confidence_threshold: float = Form(),
+                           desired_classes: Optional[List[str]] = Form(None),
+                           ):
+    try:
+        image = Image.open(BytesIO(image))
+        results = yolov5_model(image)
+
+        filtered_results = results.pandas().xyxy[0]
+        filtered_results = filtered_results[
+            ((filtered_results['name'].isin(desired_classes)) if desired_classes else True) & (
+                    filtered_results['confidence'] >= confidence_threshold
+            )]
+
+        filtered_img = np.array(image)
+
+        for _, row in filtered_results.iterrows():
+            label = row['name']
+            conf = row['confidence']
+            xmin, ymin, xmax, ymax = row[['xmin', 'ymin', 'xmax', 'ymax']]
+            color = (0, 255, 0)  # Зеленый цвет для рамки
+            cv2.rectangle(filtered_img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), color, 2)
+            cv2.putText(filtered_img, f'{label} {conf:.2f}', (int(xmin), int(ymin) - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.9, color, 2)
+
+        img_byte_arr = image_from_array(filtered_img)
+
+        filtered_results = []
+        for *box, conf, cls in results.xyxy[0]:
+            label = yolov5_model.names[int(cls)]
+            if (label in desired_classes if desired_classes else True) and conf >= confidence_threshold:
+                filtered_results.append((box, conf, cls))
+
+        # Вырезание и отображение отфильтрованных объектов
+        cropped_images = []
+        for box, conf, cls in filtered_results:
+            xmin, ymin, xmax, ymax = map(int, box)
+            cropped_image = filtered_img[ymin:ymax, xmin:xmax]
+            cropped_images.append(cropped_image)
+
+        return {
+            'status': 'ok',
+            'image': base64.b64encode(img_byte_arr).decode(),
+            'cropped_images': list(map(lambda x: base64.b64encode(image_from_array(x)).decode(), cropped_images)),
+            'error': None
+        }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'image': None,
+            'error': {
+                'message': str(e),
+                'type': type(e).__name__
+            }
+        }
 
 
 # region Basic Models

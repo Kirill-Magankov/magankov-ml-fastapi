@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="w-full max-w-7xl mx-auto my-8">
+
+        <div class="mb-8 space-y-2">
+            <h1 class="text-3xl font-bold ">Please select an image to processing</h1>
+            <p class="text-gray-500 text-sm">Yolo5 Detecting</p>
+        </div>
+
+
+        <form class="space-y-4 max-w-sm" method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required
+                   class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none file:bg-gray-50 file:border-0 file:me-4 file:py-3 file:px-4">
+
+            <div>
+                <label for="hs-threshold" class="block text-sm font-medium mb-2">
+                    Confidence threshold
+                </label>
+                <input type="text" name="confidence_threshold" required value="{{ threshold }}" id="hs-threshold"
+                       class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none"
+                       placeholder="Confidence threshold">
+            </div>
+
+            <div>
+                <label for="textarea-label-with-helper-text" class="block text-sm font-medium mb-2">
+                    Desired classes
+                </label>
+                <textarea id="textarea-label-with-helper-text" rows="3" name="desired_classes"
+                          placeholder="Enter desired classes without spacing"
+                          class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none"
+                          aria-describedby="hs-textarea-helper-text">{{ desired_classes }}</textarea>
+
+                <p class="mt-2 text-xs text-gray-500 dark:text-neutral-500" id="hs-textarea-helper-text">
+                    Separated by comma (e.g. person,handbag,cup)
+                </p>
+            </div>
+
+            <button type="submit"
+                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
+                Submit
+            </button>
+        </form>
+
+        <div class="mt-8 space-y-4">
+            {% if image %}
+                <div class="space-y-2">
+                    <p class="text-gray-500">Processed Image:</p>
+                    <a href="data:image/png;base64,{{ image }}" target="_blank">
+                        <img class="border rounded-lg w-[48rem]" src="data:image/png;base64,{{ image }}"
+                             alt="Detected Image"/>
+                    </a>
+                </div>
+            {% endif %}
+
+            {% if cropped_images %}
+                <div class="grid grid-col-6 space-y-2">
+                    <p class="col-span-6 text-gray-500">Cropped Images ({{ cropped_images|length }}):</p>
+                    {% for cropped in  cropped_images %}
+                        <a class="block" href="data:image/png;base64,{{ cropped }}" target="_blank">
+                            <img class="w-[8rem]" src="data:image/png;base64,{{ cropped }}" alt="Cropped Image"/>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+{% endblock %}
